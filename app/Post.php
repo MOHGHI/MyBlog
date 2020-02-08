@@ -2,16 +2,27 @@
 
 namespace App;
 
+use App\Events\PostCreated;
+
 class Post extends Model
 {
-    //
+    protected $dispatchesEvents = [
+        'created' => PostCreated::class,
+    ];
+
     public function getRouteKeyName()
     {
         return 'slug';
     }
 
-    public function scopeIncomplete($query)
+    public function tags()
     {
-        return $query->where('completed', '0');
+        return $this->belongsToMany(Tag::class);
     }
+
+    public function owner()
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }

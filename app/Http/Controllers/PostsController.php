@@ -28,7 +28,6 @@ class PostsController extends Controller
 
     public function index()
     {
-//        $posts = Post::latest()->get();
         $posts = auth()->user()->posts()->with('tags')->latest()->get();
         return view('posts.index', compact('posts'));
     }
@@ -59,12 +58,7 @@ class PostsController extends Controller
         $request_arr['owner_id'] = auth()->id();
         $post = Post::create($request_arr);
 
-//        $this->admin->notify(new \App\Notifications\
         $this->admin->notify(new PostCreated($post));
-
-//        $this->admin->notify(new PostUpdated($post));
-
-
         return redirect('/posts');
     }
 
@@ -105,7 +99,6 @@ class PostsController extends Controller
         $this->admin->notify(new PostUpdated($post));
 
         return redirect("/posts/{$post->slug}");
-//        return redirect("/posts");
     }
 
     public function destroy(Post $post)

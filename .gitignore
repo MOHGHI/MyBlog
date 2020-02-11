@@ -4,6 +4,7 @@
 /storage/*.key
 /vendor
 /tests
+/.idea
 .idea
 .env
 .env.backup

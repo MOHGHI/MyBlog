@@ -10,27 +10,7 @@
             @csrf
             @method('PATCH')
             <div class="form-group">
-                <label for="inputTitle">Change Post</label>
-                <input type="text" class="form-control" id="inputTitle" placeholder="Enter post's title"
-                       name="title"
-                       value="{{old('title', $post->title)}}"
-                >
-                <div class="form-group">
-                    <label for="inputBody">Post body</label>
-                    <textarea class="form-control" id="inputBody" name="body">{{ old('body', $post->body) }}</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="inputTag">Tags</label>
-                    <input class="form-control"
-                           type="text"
-                           name="tags"
-                           id="inputTags"
-                           value="{{ old('tags', $post->tags->pluck('name')->implode(',')) }}"
-{{--                           value="{{ old('tags')}}"--}}
-                    >
-                </div>
-
+            @include('posts.post_form')
                 <button type="submit" class="btn btn-primary">Change post</button>
             </div>
         </form>

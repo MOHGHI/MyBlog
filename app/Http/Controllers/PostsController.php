@@ -17,13 +17,10 @@ use Illuminate\Support\Str;
 class PostsController extends Controller
 {
 
-    private $admin;
-
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('can:update,post')->except(['index','store','create']);
-        $this->admin = User::where('email',env('ADMIN_EMAIL')) -> first();
+        $this->middleware('can:update,post')->except(['index','store','create','show']);
     }
 
     public function index()
@@ -55,10 +52,22 @@ class PostsController extends Controller
             'short_body' => 'required |max:255',
             'body' => 'required',
         ]);
-        $request_arr['owner_id'] = auth()->id();
-        $post = Post::create($request_arr);
 
-        $this->admin->notify(new PostCreated($post));
+        $request_arr['published']  = \request('published') == 'on' ? 1 : 0;
+        $request_arr['owner_id'] = auth()->id();
+        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
+            return $item;
+        });
+        $syncIds = [];
+        foreach ($tags as $tag) {
+            $tag = Tag::firstOrCreate(['name' => $tag]);
+            $syncIds[] = $tag->id;
+        }
+
+        $post = Post::create($request_arr);
+        $post->tags()->sync($syncIds);
+        User::admin()->notify(new PostCreated($post));
+        flash('post was created successfully.');
         return redirect('/posts');
     }
 
@@ -70,21 +79,20 @@ class PostsController extends Controller
     public function update(Post $post)
     {
         $attribute = request()->validate([
-            'title' => 'required',
+            'title' => 'required |min:5 |max:100',
+            'short_body' => 'required |max:255',
             'body' => 'required',
         ]);
 
+        $attribute['published']  = \request('published') == 'on' ? 1 : 0;
+
         /** @var Collection $postTag */
         $postTag = $post->tags->keyBy('name');
-
         $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
             return $item;
         });
-
         $syncIds = $postTag->intersectByKeys($tags)->pluck('id')->toArray();
-
         $tagsToAttach = $tags->diffKeys($postTag);
-
         foreach ($tagsToAttach as $tag)
         {
             $tag = Tag::firstOrCreate(['name' => $tag]);
@@ -92,12 +100,9 @@ class PostsController extends Controller
         }
 
         $post->tags()->sync($syncIds);
-
         $post->update($attribute);
         flash('post was updated successfully.');
-
-        $this->admin->notify(new PostUpdated($post));
-
+        User::admin()->notify(new PostUpdated($post));
         return redirect("/posts/{$post->slug}");
     }
 
@@ -106,10 +111,10 @@ class PostsController extends Controller
         $deleted = $post->delete();
         if($deleted) {
             flash('post was deleted successfully.', 'danger');
-            $this->admin->notify(new PostDeleted());
+            User::admin()->notify(new PostDeleted($post));
         } else {
             flash('something went wrong.', 'danger');
-            $this->admin->notify(new PostDeleted($post));
+            User::admin()->notify(new PostDeleted($post));
         }
 
         return redirect('/posts');

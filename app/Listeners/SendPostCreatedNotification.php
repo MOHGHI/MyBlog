@@ -17,8 +17,8 @@ class SendPostCreatedNotification
      */
     public function handle(PostCreated $event)
     {
-        \Mail::to(env('ADMIN_EMAIL'))->send(
-          new \App\Mail\PostCreated($event->post)
-        );
+//        \Mail::to(env('ADMIN_EMAIL'))->send(
+//          new \App\Mail\PostCreated($event->post)
+//        );
     }
 }

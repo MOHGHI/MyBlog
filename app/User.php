@@ -36,4 +36,14 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function posts()
+    {
+        return $this->hasMany(Post::class, 'owner_id');
+    }
+
+    public static function admin()
+    {
+        return static::where('email',env('ADMIN_EMAIL')) -> first();
+    }
 }

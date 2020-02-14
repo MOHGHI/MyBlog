@@ -3,15 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Feedback;
+use App\User;
 use Illuminate\Http\Request;
 
 class FeedbacksController extends Controller
 {
-    //
+
+    public function __construct()
+    {
+        $this->middleware('auth')->only('show');
+    }
+
     public function index()
     {
-        $feedbacks = Feedback::latest()->get();
-        return view('feedbacks.index', compact('feedbacks'));
+        if (User::isAdmin(auth()->user()))
+        {
+            $feedbacks = Feedback::latest()->get();
+            return view('feedbacks.index', compact('feedbacks'));
+        }
+
     }
 
     public function show(Feedback $feedback)
@@ -31,6 +41,6 @@ class FeedbacksController extends Controller
             'message' => 'required',
         ]);
         Feedback::create($request_arr);
-        return redirect('/posts');
+        return redirect('/');
     }
 }

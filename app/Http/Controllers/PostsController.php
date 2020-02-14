@@ -7,6 +7,7 @@ use App\Notifications\PostCreated;
 use App\Notifications\PostDeleted;
 use App\Notifications\PostUpdated;
 use App\Post;
+use App\Service\Pushall;
 use App\Tag;
 use App\User;
 use Illuminate\Http\Request;
@@ -19,14 +20,19 @@ class PostsController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth');
-        $this->middleware('can:update,post')->except(['index','store','create','show']);
+        $this->middleware('auth')->except('showAllPosts','show');
     }
 
     public function index()
     {
         $posts = auth()->user()->posts()->with('tags')->latest()->get();
         return view('posts.index', compact('posts'));
+    }
+
+    public function showAllPosts()
+    {
+        $posts = Post::where('published', true)->latest()->get();
+        return view('index', compact('posts'));
     }
 
     public function show(Post $post)
@@ -55,18 +61,13 @@ class PostsController extends Controller
 
         $request_arr['published']  = \request('published') == 'on' ? 1 : 0;
         $request_arr['owner_id'] = auth()->id();
-        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
-            return $item;
-        });
-        $syncIds = [];
-        foreach ($tags as $tag) {
-            $tag = Tag::firstOrCreate(['name' => $tag]);
-            $syncIds[] = $tag->id;
-        }
-
         $post = Post::create($request_arr);
-        $post->tags()->sync($syncIds);
+        $post->addTags($new = true);
         User::admin()->notify(new PostCreated($post));
+
+        $pushall = new Pushall(config('mohghi.pushall.api.key'), config('mohghi.pushall.api.id'));
+        $pushall->send('Post created', 'New post was created');
+
         flash('post was created successfully.');
         return redirect('/posts');
     }
@@ -85,21 +86,7 @@ class PostsController extends Controller
         ]);
 
         $attribute['published']  = \request('published') == 'on' ? 1 : 0;
-
-        /** @var Collection $postTag */
-        $postTag = $post->tags->keyBy('name');
-        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
-            return $item;
-        });
-        $syncIds = $postTag->intersectByKeys($tags)->pluck('id')->toArray();
-        $tagsToAttach = $tags->diffKeys($postTag);
-        foreach ($tagsToAttach as $tag)
-        {
-            $tag = Tag::firstOrCreate(['name' => $tag]);
-            $syncIds[] = $tag->id;
-        }
-
-        $post->tags()->sync($syncIds);
+        $post->addTags();
         $post->update($attribute);
         flash('post was updated successfully.');
         User::admin()->notify(new PostUpdated($post));

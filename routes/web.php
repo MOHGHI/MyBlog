@@ -12,20 +12,35 @@
 */
 
 
-Route::get('/', function () {
-    return view('index');
-});
+Route::get('/','PostsController@showAllPosts');
+
 
 Route::get('/about', function () {
     return view('about');
 });
 
+//Admin routes
+Route::get('/admin', function () {
+    if((auth()->user() && auth()->user()->isAdmin()))
+        return view('posts.admin.index');
+    else
+        abort(403, 'Unauthorized action.');
+});
+Route::resource('/admin/posts','admin\PostsController');
+Route::get('/admin/feedbacks', 'FeedbacksController@index');
+Route::post('/admin/published/{post}', 'admin\PostsController@publish');
+Route::patch('/admin/published/{post}', 'admin\PostsController@unpublish');
+
 Route::get('/posts/tags/{tag}', 'TagsController@index');
 Route::resource('/posts','PostsController');
-Route::get('/admin/feedbacks', 'FeedbacksController@index');
 Route::get('/feedbacks', 'FeedbacksController@index');
 Route::get('/contacts', 'FeedbacksController@create');
 Route::post('/feedbacks', 'FeedbacksController@store');
 Route::get('/feedback/{feedback}', 'FeedbacksController@show');
+
+Route::get('/test','TestController@test');
+
+Route::get('/service', 'PushServiceController@form');
+Route::post('/service', 'PushServiceController@send');
 
 Auth::routes();

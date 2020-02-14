@@ -24,8 +24,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+
+        $schedule->command('app:sendpost 13.02.2020 14.02.2020')
+        ->mondays()
+        ->at('10:00');
     }
 
     /**

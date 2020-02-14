@@ -1,5 +1,7 @@
 <?php
 
+use App\Providers\PushAllProvider;
+
 return [
 
     /*
@@ -175,6 +177,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\TelescopeServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\PushAllProvider::class,
 
     ],
 

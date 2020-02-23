@@ -12,3 +12,4 @@ if(!function_exists('flash'))
         session()->flash('message_type', $type);
     }
 }
+

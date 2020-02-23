@@ -1,6 +1,7 @@
 /node_modules
 /public/hot
 /public/storage
+/app/Http/Controllers/TestController.php
 /storage/*.key
 /vendor
 /tests

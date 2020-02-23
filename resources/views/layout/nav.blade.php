@@ -43,9 +43,11 @@
             <a class="p-2 text-muted" href="/about">О нас</a>
             <a class="p-2 text-muted" href="/contacts">Контакты</a>
             <a class="p-2 text-muted" href="/posts/create">добавить Статью</a>
-            @if(auth()->user() && auth()->user()->isAdmin())
-                <a class="p-2 text-muted" href="/admin">Admin</a>
-            @endif
+{{--            @if(auth()->user() && auth()->user()->isAdmin())--}}
+{{--                <a class="p-2 text-muted" href="/admin">Admin</a>--}}
+{{--            @endif--}}
+            @isAdmin(['section' => '<a class="p-2 text-muted" href="/admin">Admin</a>'])
+            @endisAdmin
         </nav>
     </div>
 </div>

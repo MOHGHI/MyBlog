@@ -29,5 +29,7 @@ class AppServiceProvider extends ServiceProvider
         view()->composer('layout.sidebar', function ($view) {
             $view->with('tagsCloud', Tag::tagsCloud());
         });
+
+        \Blade::component('components.isadmin', 'isAdmin');
     }
 }

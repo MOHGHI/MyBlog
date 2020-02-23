@@ -21,12 +21,9 @@ class Post extends Model
         return $this->belongsToMany(Tag::class);
     }
 
-    public function addTags($new = false)
+    public function addTags($tags)
     {
-        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
-            return $item;
-        });
-        if(!$new) {
+        if(!$this->tags()->exists()) {
             /** @var Collection $postTag */
             $postTag = $this->tags->keyBy('name');
             $syncIds = $postTag->intersectByKeys($tags)->pluck('id')->toArray();

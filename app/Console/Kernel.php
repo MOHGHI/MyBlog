@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -25,7 +26,10 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
-        $schedule->command('app:sendpost 13.02.2020 14.02.2020')
+        $today = Carbon::today()->format('Y-m-d');
+        $todayMinusOneWeekAgo = Carbon::today()->subweek()->format('Y-m-d');
+
+        $schedule->command("app:sendpost $today $todayMinusOneWeekAgo")
         ->mondays()
         ->at('10:00');
     }

@@ -62,7 +62,10 @@ class PostsController extends Controller
         $request_arr['published']  = \request('published') == 'on' ? 1 : 0;
         $request_arr['owner_id'] = auth()->id();
         $post = Post::create($request_arr);
-        $post->addTags($new = true);
+        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
+            return $item;
+        });
+        $post->addTags($tags);
         User::admin()->notify(new PostCreated($post));
 
         $pushall = new Pushall(config('mohghi.pushall.api.key'), config('mohghi.pushall.api.id'));
@@ -86,7 +89,10 @@ class PostsController extends Controller
         ]);
 
         $attribute['published']  = \request('published') == 'on' ? 1 : 0;
-        $post->addTags();
+        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
+            return $item;
+        });
+        $post->addTags($tags);
         $post->update($attribute);
         flash('post was updated successfully.');
         User::admin()->notify(new PostUpdated($post));

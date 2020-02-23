@@ -38,8 +38,6 @@ Route::get('/contacts', 'FeedbacksController@create');
 Route::post('/feedbacks', 'FeedbacksController@store');
 Route::get('/feedback/{feedback}', 'FeedbacksController@show');
 
-Route::get('/test','TestController@test');
-
 Route::get('/service', 'PushServiceController@form');
 Route::post('/service', 'PushServiceController@send');
 

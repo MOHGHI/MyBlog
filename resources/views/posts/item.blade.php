@@ -1,8 +1,10 @@
 <div class="blog-post">
     <h2 class="blog-post-title"><a href="/posts/{{$post->slug}}">{{$post->title}} </a> </h2>
-    @if (auth()->user() && auth()->user()->isAdmin())
-        <a href="/admin/posts/">Change</a>
-    @endif
+{{--    @if (auth()->user() && auth()->user()->isAdmin())--}}
+{{--        <a href="/admin/posts/">Change</a>--}}
+{{--    @endif--}}
+    @isAdmin(['section' => '<a href="/admin/posts/">Change</a>'])
+    @endisAdmin
     <p class="blog-post-meta">{{$post->created_at->format('d.m.Y H:i:s')}}</p>
 
     @include('posts.tags', ['tags' => $post->tags])

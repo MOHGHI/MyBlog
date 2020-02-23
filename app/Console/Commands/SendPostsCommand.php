@@ -39,23 +39,7 @@ class SendPostsCommand extends Command
      */
     public function handle()
     {
-//        $users = \App\User::all();
-//        if(date_parse($this->argument('from'))['error_count'] == 0 &&
-//            date_parse($this->argument('to'))['error_count'] == 0) {
-//            $from = $this->argument('from');
-//            $to = $this->argument('to');
-//            $posts = Post::where([
-//                ['published', true],
-//                ['created_at','>=', $from],
-//                ['created_at','<=', $to],
-//            ])->latest()->get();
-//            $users->map->notify(new \App\Notifications\SendPost($posts));
-//        } else {
-//            $this->error('Wrong date format. It must be dd-mm-yyyy');
-//        }
-
         $users = \App\User::all();
-
         try {
             $from = Carbon::parse($this->argument('from'));
             $to = Carbon::parse($this->argument('to'));
@@ -68,6 +52,5 @@ class SendPostsCommand extends Command
         } catch (\Exception $e) {
             $this->error('Wrong date format. It must be dd-mm-yyyy');
         }
-
     }
 }

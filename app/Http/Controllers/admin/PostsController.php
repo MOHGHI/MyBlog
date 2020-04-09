@@ -12,12 +12,11 @@ class PostsController extends \App\Http\Controllers\PostsController
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('can:update,post');
     }
 
     public function index()
     {
-        $posts = Post::all()->latest()->get();
+        $posts = Post::latest()->get();
         return view('posts.admin.posts_list', compact('posts'));
     }
 

@@ -4,7 +4,7 @@
     <td>{{$post->short_body}}</td>
     <td>{{($post->owner()->pluck('name')->toArray()[0])}}</td>
     <td>
-        <form method="post" action="/admin/published/{{$post->slug}}">
+        <form method="post" action="/admin/posts/published/{{$post->slug}}">
             @if($post->published)
                 @method('PATCH')
             @endif

@@ -42,6 +42,11 @@ class User extends Authenticatable
         return $this->hasMany(Post::class, 'owner_id');
     }
 
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'owner_id');
+    }
+
     public function isAdmin()
     {
         return $this->role === 'admin';
@@ -56,4 +61,10 @@ class User extends Authenticatable
     {
         return $user->name;
     }
+
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
+
 }

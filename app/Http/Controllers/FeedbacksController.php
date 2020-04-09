@@ -16,7 +16,7 @@ class FeedbacksController extends Controller
 
     public function index()
     {
-        if (User::isAdmin(auth()->user()))
+        if (auth()->user() && auth()->user()->isAdmin())
         {
             $feedbacks = Feedback::latest()->get();
             return view('feedbacks.index', compact('feedbacks'));

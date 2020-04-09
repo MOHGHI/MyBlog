@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Comment;
 use App\Notifications\PostCreated;
 use App\Notifications\PostDeleted;
 use App\Notifications\PostUpdated;
@@ -65,7 +66,7 @@ class PostsController extends Controller
         $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
             return $item;
         });
-        $post->addTags($tags);
+        addTags($post,$tags);
         User::admin()->notify(new PostCreated($post));
 
         $pushall = new Pushall(config('mohghi.pushall.api.key'), config('mohghi.pushall.api.id'));
@@ -92,11 +93,25 @@ class PostsController extends Controller
         $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
             return $item;
         });
-        $post->addTags($tags);
+        addTags($post,$tags);
         $post->update($attribute);
         flash('post was updated successfully.');
         User::admin()->notify(new PostUpdated($post));
         return redirect("/posts/{$post->slug}");
+    }
+
+    public function addComment(Post $post)
+    {
+        $request_arr = $this->validate(request(), [
+            'title' => 'required |min:5 |max:100',
+            'comment' => 'required |max:255',
+        ]);
+//        addComments($post, $request_arr);
+        $request_arr['owner_id'] = auth()->id();
+        $comment = \App\Comment::Create($request_arr);
+//        $post->comments()->sync($comment->id);
+        $post->comments()->save($comment);
+        return back();
     }
 
     public function destroy(Post $post)

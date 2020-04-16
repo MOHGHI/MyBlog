@@ -31,5 +31,10 @@ class AppServiceProvider extends ServiceProvider
         });
 
         \Blade::component('components.isadmin', 'isAdmin');
+
+//        \DB::listen(function ($query) {
+//            dump($query->sql);
+////            dump($query->bindings);
+//        });
     }
 }

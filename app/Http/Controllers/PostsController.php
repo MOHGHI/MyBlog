@@ -106,10 +106,8 @@ class PostsController extends Controller
             'title' => 'required |min:5 |max:100',
             'comment' => 'required |max:255',
         ]);
-//        addComments($post, $request_arr);
         $request_arr['owner_id'] = auth()->id();
         $comment = \App\Comment::Create($request_arr);
-//        $post->comments()->sync($comment->id);
         $post->comments()->save($comment);
         return back();
     }

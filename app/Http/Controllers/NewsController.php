@@ -12,7 +12,6 @@ class NewsController extends Controller
     public function __construct()
     {
         $this->middleware('auth')->except('showAllNews','show');
-//        $this->middleware('can:edit,update,news')->except('showAllNews','show');
     }
 
     public function index()

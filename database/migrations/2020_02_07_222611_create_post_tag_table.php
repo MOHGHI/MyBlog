@@ -13,10 +13,11 @@ class CreatePostTagTable extends Migration
      */
     public function up()
     {
-        Schema::create('taggables', function (Blueprint $table) {
+        Schema::create('post_tag', function (Blueprint $table) {
+            $table->unsignedInteger('post_id');
             $table->unsignedInteger('tag_id');
-            $table->morphs('taggable');
-            $table->primary(['tag_id','taggable_id', 'taggable_type']);
+            $table->primary(['post_id','tag_id']);
+            $table->foreign('post_id')->references('id')->on('posts')->onDelete('cascade');
             $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
         });
     }

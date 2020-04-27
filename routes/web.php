@@ -21,7 +21,7 @@ Route::get('/about', function () {
 
 //Admin routes
 Route::get('/admin', function () {
-    if((auth()->user() && auth()->user()->isAdmin()))
+    if(Auth::user()->isAdmin())
         return view('adminIndex');
     else
         abort(403, 'Unauthorized action.');

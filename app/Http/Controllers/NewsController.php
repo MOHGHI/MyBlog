@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\News;
+use App\Post;
+use App\Service\AddComment;
+use App\Service\AddTags;
+use App\Service\FormValidation;
 use App\User;
 use Illuminate\Http\Request;
 
@@ -31,27 +35,13 @@ class NewsController extends Controller
         return view('news.create');
     }
 
-    public function store(Request $request)
+    public function store()
     {
-        $request_arr = $this->validate(request(), [
-            'slug' =>
-                array(
-                    'required',
-                    'unique:news,slug',
-                    'regex:/(^([a-zA-Z0-9-_]+)(\d+)?$)/u'
-                ),
-            'title' => 'required |min:5 |max:100',
-            'short_body' => 'required |max:255',
-            'body' => 'required',
-        ]);
-
-        $request_arr['published']  = \request('published') == 'on' ? 1 : 0;
-        $news = News::create($request_arr);
-        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
-            return $item;
-        });
-        addTags($news,$tags);
-
+        $formValidator = new FormValidation();
+        $newsFormAttributes = $formValidator->FormValidation();
+        $news = News::create($newsFormAttributes['attributes']);
+        $tagsAdder = new AddTags();
+        $tagsAdder->addTags($news,$newsFormAttributes['tags']);
         flash('news was created successfully.');
         return redirect('/news');
     }
@@ -68,18 +58,13 @@ class NewsController extends Controller
 
     public function update(News $news)
     {
-        $attribute = request()->validate([
-            'title' => 'required |min:5 |max:100',
-            'short_body' => 'required |max:255',
-            'body' => 'required',
-        ]);
-
-        $attribute['published']  = \request('published') == 'on' ? 1 : 0;
-        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
-            return $item;
-        });
-        addTags($news,$tags);
-        $news->update($attribute);
+        $slug = request()->slug;
+        $id = News::where('slug', '=', $slug)->first();
+        $formValidator = new FormValidation();
+        $newsFormAttributes = $formValidator->FormValidation($news, $id);
+        $tagsAdder = new AddTags();
+        $tagsAdder->addTags($news,$newsFormAttributes['tags']);
+        $news->update($newsFormAttributes['attributes']);
         flash('news was updated successfully.');
         return redirect("/news/{$news->slug}");
     }
@@ -98,13 +83,8 @@ class NewsController extends Controller
 
     public function addComment(News $news)
     {
-        $request_arr = $this->validate(request(), [
-            'title' => 'required |min:5 |max:100',
-            'comment' => 'required |max:255',
-        ]);
-        $request_arr['owner_id'] = auth()->id();
-        $comment = \App\Comment::Create($request_arr);
-        $news->comments()->save($comment);
+        $addComment = new AddComment();
+        $addComment->addComments($news);
         return back();
     }
 

@@ -6,7 +6,7 @@
             Change News
         </h3>
         @include('errors.errors')
-        <form method="post" action="/news/{{$news->slug}}">
+        <form method="post" action="/admin/news/{{$news->slug}}">
             @csrf
             @method('PATCH')
             <div class="form-group">

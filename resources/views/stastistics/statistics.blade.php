@@ -25,19 +25,19 @@
             </tr>
             <tr>
                 <td>ФИО автора, у которого больше всего статей</td>
-                <td>{{$userMostPostsName}}</td>
+                <td>{{$userMostPosts->name}}</td>
             </tr>
             <tr>
                 <td>Самая длинная статья </td>
-                <td>{{$longestPost->pluck('title')[0]}}</td>
-                <td><a href="/posts/{{$longestPost->pluck('slug')[0]}}">Go to post</a></td>
-                <td>Длина: {{$longestPostBodyLength}}</td>
+                <td>{{$longestPost->title}}</td>
+                <td><a href="/posts/{{$longestPost->slug}}">Go to post</a></td>
+                <td>Длина: {{$longestPost->bodyLength}}</td>
             </tr>
             <tr>
                 <td>Самая короткая статья </td>
-                <td>{{$shortestPost->pluck('title')[0]}}</td>
-                <td><a href="/posts/{{$shortestPost->pluck('slug')[0]}}">Go to post</a></td>
-                <td>Длина: {{$shortestPostBodyLength}}</td>
+                <td>{{$shortestPost->title}}</td>
+                <td><a href="/posts/{{$shortestPost->slug}}">Go to post</a></td>
+                <td>Длина: {{$shortestPost->bodyLength}}</td>
             </tr>
             <tr>
                 <td>Средние количество статей у активных пользователей</td>
@@ -45,13 +45,13 @@
             </tr>
             <tr>
                 <td>Самая непостоянная статья </td>
-                <td>{{$mostChangePost->pluck('title')[0]}}</td>
-                <td><a href="/posts/{{$mostChangePost->pluck('slug')[0]}}">Go to post</a></td>
+                <td>{{$mostChangePost->title}}</td>
+                <td><a href="/posts/{{$mostChangePost->slug}}">Go to post</a></td>
             </tr>
             <tr>
                 <td>Самая обсуждаемая статья </td>
-                <td>{{$mostCommentPost->pluck('title')[0]}}</td>
-                <td><a href="/posts/{{$mostCommentPost->pluck('slug')[0]}}">Go to post</a></td>
+                <td>{{$mostCommentPost->title}}</td>
+                <td><a href="/posts/{{$mostCommentPost->slug}}">Go to post</a></td>
             </tr>
             </tbody>
         </table>

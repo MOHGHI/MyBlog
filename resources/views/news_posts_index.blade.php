@@ -6,7 +6,7 @@
             <h3 class="pb-4 mb-4 font-italic border-bottom">
                 News's list
             </h3>
-            @foreach($news as $new)
+            @foreach($allRelations['news'] as $new)
                 @include('news.item')
             @endforeach
         </div>
@@ -15,7 +15,7 @@
             <h3 class="pb-4 mb-4 font-italic border-bottom">
                 Post's list
             </h3>
-            @foreach($posts as $post)
+            @foreach($allRelations['posts'] as $post)
                 @include('posts.item')
             @endforeach
         </div>

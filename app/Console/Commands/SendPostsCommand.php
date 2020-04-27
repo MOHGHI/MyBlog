@@ -43,11 +43,7 @@ class SendPostsCommand extends Command
         try {
             $from = Carbon::parse($this->argument('from'));
             $to = Carbon::parse($this->argument('to'));
-            $posts = Post::where([
-                ['published', true],
-                ['created_at','>=', $from],
-                ['created_at','<=', $to],
-            ])->latest()->get();
+            $posts = Post::where('published', false)->whereBetween('created_at',[$from, $to])->latest()->get();
             $users->map->notify(new \App\Notifications\SendPost($posts));
         } catch (\Exception $e) {
             $this->error('Wrong date format. It must be dd-mm-yyyy');

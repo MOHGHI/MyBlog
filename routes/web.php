@@ -54,3 +54,5 @@ Route::post('/news/comments/{news}', 'NewsController@addComment');
 Route::get('/statistics', 'StatisticsController@index');
 
 Auth::routes();
+
+Route::get('/test', 'TestController@index');

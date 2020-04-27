@@ -8,6 +8,9 @@ use App\Notifications\PostCreated;
 use App\Notifications\PostDeleted;
 use App\Notifications\PostUpdated;
 use App\Post;
+use App\Service\AddComment;
+use App\Service\AddTags;
+use App\Service\FormValidation;
 use App\Service\Pushall;
 use App\Tag;
 use App\User;
@@ -48,30 +51,18 @@ class PostsController extends Controller
 
     public function store()
     {
-        $request_arr = $this->validate(request(), [
-            'slug' =>
-                array(
-                    'required',
-                    'unique:posts,slug',
-                    'regex:/(^([a-zA-Z0-9-_]+)(\d+)?$)/u'
-                ),
-            'title' => 'required |min:5 |max:100',
-            'short_body' => 'required |max:255',
-            'body' => 'required',
-        ]);
-
-        $request_arr['published']  = \request('published') == 'on' ? 1 : 0;
-        $request_arr['owner_id'] = auth()->id();
-        $post = Post::create($request_arr);
+        $formValidator = new FormValidation();
+        $postFormAttributes = $formValidator->FormValidation();
+        $postFormAttributes['attributes']['owner_id'] = auth()->id();
+        $post = Post::create($postFormAttributes['attributes']);
         $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
             return $item;
         });
-        addTags($post,$tags);
+        $tagsAdder = new AddTags();
+        $tagsAdder->addTags($post,$postFormAttributes['tags']);
         User::admin()->notify(new PostCreated($post));
-
         $pushall = new Pushall(config('mohghi.pushall.api.key'), config('mohghi.pushall.api.id'));
         $pushall->send('Post created', 'New post was created');
-
         flash('post was created successfully.');
         return redirect('/posts');
     }
@@ -83,18 +74,14 @@ class PostsController extends Controller
 
     public function update(Post $post)
     {
-        $attribute = request()->validate([
-            'title' => 'required |min:5 |max:100',
-            'short_body' => 'required |max:255',
-            'body' => 'required',
-        ]);
 
-        $attribute['published']  = \request('published') == 'on' ? 1 : 0;
-        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
-            return $item;
-        });
-        addTags($post,$tags);
-        $post->update($attribute);
+        $slug = request()->slug;
+        $id = Post::where('slug', '=', $slug)->first();
+        $formValidator = new FormValidation();
+        $postFormAttributes = $formValidator->FormValidation($post, $id);
+        $tagsAdder = new AddTags();
+        $tagsAdder->addTags($post,$postFormAttributes['tags']);
+        $post->update($postFormAttributes['attributes']);
         flash('post was updated successfully.');
         User::admin()->notify(new PostUpdated($post));
         return redirect("/posts/{$post->slug}");
@@ -102,13 +89,8 @@ class PostsController extends Controller
 
     public function addComment(Post $post)
     {
-        $request_arr = $this->validate(request(), [
-            'title' => 'required |min:5 |max:100',
-            'comment' => 'required |max:255',
-        ]);
-        $request_arr['owner_id'] = auth()->id();
-        $comment = \App\Comment::Create($request_arr);
-        $post->comments()->save($comment);
+        $addComment = new AddComment();
+        $addComment->addComments($post);
         return back();
     }
 

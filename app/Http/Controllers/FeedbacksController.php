@@ -37,7 +37,7 @@ class FeedbacksController extends Controller
     public function store()
     {
         $request_arr = $this->validate(request(), [
-            'email' => 'required | email:rfc',
+            'email' => 'required|email:rfc',
             'message' => 'required',
         ]);
         Feedback::create($request_arr);

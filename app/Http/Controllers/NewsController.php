@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Comment;
+use App\Http\Requests\ModelCreateUpdateRequest;
 use App\News;
 use App\Post;
 use App\Service\AddComment;
@@ -13,9 +15,14 @@ use Illuminate\Http\Request;
 class NewsController extends Controller
 {
 
-    public function __construct()
+    protected $formValidator;
+    protected $tagsAdder;
+
+    public function __construct(FormValidation $formValidator, AddTags $tagsAdder)
     {
         $this->middleware('auth')->except('showAllNews','show');
+        $this->formValidator = $formValidator;
+        $this->tagsAdder = $tagsAdder;
     }
 
     public function index()
@@ -35,13 +42,14 @@ class NewsController extends Controller
         return view('news.create');
     }
 
-    public function store()
+    public function store(ModelCreateUpdateRequest $request)
     {
-        $formValidator = new FormValidation();
-        $newsFormAttributes = $formValidator->FormValidation();
+        $newsFormAttributes = $request->validated();
+        $tags = $newsFormAttributes['tags'];
+        $newsFormAttributes['published']  = $newsFormAttributes['published'] == 'on' ? 1 : 0;
+        unset($newsFormAttributes['tags']);
         $news = News::create($newsFormAttributes['attributes']);
-        $tagsAdder = new AddTags();
-        $tagsAdder->addTags($news,$newsFormAttributes['tags']);
+        $this->tagsAdder->addTags($news, $tags);
         flash('news was created successfully.');
         return redirect('/news');
     }
@@ -56,17 +64,16 @@ class NewsController extends Controller
         return view('news.edit', compact('news'));
     }
 
-    public function update(News $news)
+    public function update(ModelCreateUpdateRequest $request, News $news)
     {
-        $slug = request()->slug;
-        $id = News::where('slug', '=', $slug)->first();
-        $formValidator = new FormValidation();
-        $newsFormAttributes = $formValidator->FormValidation($news, $id);
-        $tagsAdder = new AddTags();
-        $tagsAdder->addTags($news,$newsFormAttributes['tags']);
-        $news->update($newsFormAttributes['attributes']);
-        flash('news was updated successfully.');
-        return redirect("/news/{$news->slug}");
+        $newsFormAttributes = $request->validated();
+        $newsFormAttributes['published']  = $newsFormAttributes['published'] == 'on' ? 1 : 0;
+        $this->tagsAdder->addTags($news, $newsFormAttributes['tags']);
+        unset($newsFormAttributes['tags']);
+        $news->update($newsFormAttributes);
+        flash('post was updated successfully.');
+        User::admin()->notify(new PostUpdated($post));
+        return redirect("/posts/{$post->slug}");
     }
 
     public function publish(News $news)
@@ -83,8 +90,9 @@ class NewsController extends Controller
 
     public function addComment(News $news)
     {
+        $comment_attr = Comment::commentValidation();
         $addComment = new AddComment();
-        $addComment->addComments($news);
+        $addComment->addComments($news, $comment_attr);
         return back();
     }
 

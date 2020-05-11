@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Comment;
+use App\Http\Requests\ModelCreateUpdateRequest;
 use App\Notifications\PostCreated;
 use App\Notifications\PostDeleted;
 use App\Notifications\PostUpdated;
@@ -17,14 +18,20 @@ use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use phpDocumentor\Reflection\Types\Array_;
 
 
 class PostsController extends Controller
 {
 
-    public function __construct()
+    protected $formValidator;
+    protected $tagsAdder;
+
+    public function __construct(FormValidation $formValidator, AddTags $tagsAdder)
     {
         $this->middleware('auth')->except('showAllPosts','show');
+        $this->formValidator = $formValidator;
+        $this->tagsAdder = $tagsAdder;
     }
 
     public function index()
@@ -49,17 +56,15 @@ class PostsController extends Controller
         return view('posts.create');
     }
 
-    public function store()
+    public function store(ModelCreateUpdateRequest $request)
     {
-        $formValidator = new FormValidation();
-        $postFormAttributes = $formValidator->FormValidation();
-        $postFormAttributes['attributes']['owner_id'] = auth()->id();
+        $postFormAttributes = $request->validated();
+        $tags = $postFormAttributes['tags'];
+        $postFormAttributes['published']  = $postFormAttributes['published'] == 'on' ? 1 : 0;
+        $postFormAttributes['owner_id'] = auth()->id();
+        unset($postFormAttributes['tags']);
         $post = Post::create($postFormAttributes['attributes']);
-        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
-            return $item;
-        });
-        $tagsAdder = new AddTags();
-        $tagsAdder->addTags($post,$postFormAttributes['tags']);
+        $this->tagsAdder->addTags($post, $tags);
         User::admin()->notify(new PostCreated($post));
         $pushall = new Pushall(config('mohghi.pushall.api.key'), config('mohghi.pushall.api.id'));
         $pushall->send('Post created', 'New post was created');
@@ -72,16 +77,13 @@ class PostsController extends Controller
         return view('posts.edit', compact('post'));
     }
 
-    public function update(Post $post)
+    public function update(ModelCreateUpdateRequest $request , Post $post)
     {
-
-        $slug = request()->slug;
-        $id = Post::where('slug', '=', $slug)->first();
-        $formValidator = new FormValidation();
-        $postFormAttributes = $formValidator->FormValidation($post, $id);
-        $tagsAdder = new AddTags();
-        $tagsAdder->addTags($post,$postFormAttributes['tags']);
-        $post->update($postFormAttributes['attributes']);
+        $postFormAttributes = $request->validated();
+        $postFormAttributes['published']  = $postFormAttributes['published'] == 'on' ? 1 : 0;
+        $this->tagsAdder->addTags($post, $postFormAttributes['tags']);
+        unset($postFormAttributes['tags']);
+        $post->update($postFormAttributes);
         flash('post was updated successfully.');
         User::admin()->notify(new PostUpdated($post));
         return redirect("/posts/{$post->slug}");
@@ -89,8 +91,9 @@ class PostsController extends Controller
 
     public function addComment(Post $post)
     {
+        $comment_attr = Comment::commentValidation();
         $addComment = new AddComment();
-        $addComment->addComments($post);
+        $addComment->addComments($post, $comment_attr);
         return back();
     }
 

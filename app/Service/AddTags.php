@@ -11,6 +11,9 @@ class AddTags
 {
     function addTags($model, $tags)
     {
+        $tags = collect(explode(',', $tags))->keyBy(function ($item) {
+            return $item;
+        });
         if(!$model->tags()->exists()) {
             /** @var Collection $modelTag */
             $modelTag = $model->tags->keyBy('name');

@@ -22,4 +22,15 @@ class Comment extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public static function commentValidation()
+    {
+        $request_arr = request()->validate([
+            'title' => 'required |min:5 |max:100',
+            'comment' => 'required |max:255',
+        ]);
+
+        $request_arr['owner_id'] = auth()->id();
+        return $request_arr;
+    }
 }

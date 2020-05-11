@@ -19,13 +19,13 @@ Route::get('/about', function () {
     return view('about');
 });
 
-//Admin routes
-Route::get('/admin', function () {
+Route::get('/admin',['middleware' => ['auth'], function () {
     if(Auth::user()->isAdmin())
         return view('adminIndex');
     else
         abort(403, 'Unauthorized action.');
-});
+}]);
+
 Route::resource('/admin/posts','admin\PostsController');
 Route::get('/admin/feedbacks', 'FeedbacksController@index');
 Route::post('/admin/posts/published/{post}', 'admin\PostsController@publish');

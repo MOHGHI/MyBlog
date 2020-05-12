@@ -3,30 +3,47 @@
 namespace App\Http\Controllers;
 
 
+use App\Comment;
+use App\Http\Requests\ModelCreateUpdateRequest;
 use App\Notifications\PostCreated;
 use App\Notifications\PostDeleted;
 use App\Notifications\PostUpdated;
 use App\Post;
+use App\Service\AddComment;
+use App\Service\AddTags;
+use App\Service\FormValidation;
+use App\Service\Pushall;
 use App\Tag;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use phpDocumentor\Reflection\Types\Array_;
 
 
 class PostsController extends Controller
 {
 
-    public function __construct()
+    protected $formValidator;
+    protected $tagsAdder;
+
+    public function __construct(FormValidation $formValidator, AddTags $tagsAdder)
     {
-        $this->middleware('auth');
-        $this->middleware('can:update,post')->except(['index','store','create','show']);
+        $this->middleware('auth')->except('showAllPosts','show');
+        $this->formValidator = $formValidator;
+        $this->tagsAdder = $tagsAdder;
     }
 
     public function index()
     {
         $posts = auth()->user()->posts()->with('tags')->latest()->get();
         return view('posts.index', compact('posts'));
+    }
+
+    public function showAllPosts()
+    {
+        $posts = Post::where('published', true)->latest()->get();
+        return view('index', compact('posts'));
     }
 
     public function show(Post $post)
@@ -39,34 +56,18 @@ class PostsController extends Controller
         return view('posts.create');
     }
 
-    public function store()
+    public function store(ModelCreateUpdateRequest $request)
     {
-        $request_arr = $this->validate(request(), [
-            'slug' =>
-                array(
-                    'required',
-                    'unique:posts,slug',
-                    'regex:/(^([a-zA-Z0-9-_]+)(\d+)?$)/u'
-                ),
-            'title' => 'required |min:5 |max:100',
-            'short_body' => 'required |max:255',
-            'body' => 'required',
-        ]);
-
-        $request_arr['published']  = \request('published') == 'on' ? 1 : 0;
-        $request_arr['owner_id'] = auth()->id();
-        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
-            return $item;
-        });
-        $syncIds = [];
-        foreach ($tags as $tag) {
-            $tag = Tag::firstOrCreate(['name' => $tag]);
-            $syncIds[] = $tag->id;
-        }
-
-        $post = Post::create($request_arr);
-        $post->tags()->sync($syncIds);
+        $postFormAttributes = $request->validated();
+        $tags = $postFormAttributes['tags'];
+        $postFormAttributes['published']  = $postFormAttributes['published'] == 'on' ? 1 : 0;
+        $postFormAttributes['owner_id'] = auth()->id();
+        unset($postFormAttributes['tags']);
+        $post = Post::create($postFormAttributes['attributes']);
+        $this->tagsAdder->addTags($post, $tags);
         User::admin()->notify(new PostCreated($post));
+        $pushall = new Pushall(config('mohghi.pushall.api.key'), config('mohghi.pushall.api.id'));
+        $pushall->send('Post created', 'New post was created');
         flash('post was created successfully.');
         return redirect('/posts');
     }
@@ -76,34 +77,24 @@ class PostsController extends Controller
         return view('posts.edit', compact('post'));
     }
 
-    public function update(Post $post)
+    public function update(ModelCreateUpdateRequest $request , Post $post)
     {
-        $attribute = request()->validate([
-            'title' => 'required |min:5 |max:100',
-            'short_body' => 'required |max:255',
-            'body' => 'required',
-        ]);
-
-        $attribute['published']  = \request('published') == 'on' ? 1 : 0;
-
-        /** @var Collection $postTag */
-        $postTag = $post->tags->keyBy('name');
-        $tags = collect(explode(',', \request('tags')))->keyBy(function ($item) {
-            return $item;
-        });
-        $syncIds = $postTag->intersectByKeys($tags)->pluck('id')->toArray();
-        $tagsToAttach = $tags->diffKeys($postTag);
-        foreach ($tagsToAttach as $tag)
-        {
-            $tag = Tag::firstOrCreate(['name' => $tag]);
-            $syncIds[] = $tag->id;
-        }
-
-        $post->tags()->sync($syncIds);
-        $post->update($attribute);
+        $postFormAttributes = $request->validated();
+        $postFormAttributes['published']  = $postFormAttributes['published'] == 'on' ? 1 : 0;
+        $this->tagsAdder->addTags($post, $postFormAttributes['tags']);
+        unset($postFormAttributes['tags']);
+        $post->update($postFormAttributes);
         flash('post was updated successfully.');
         User::admin()->notify(new PostUpdated($post));
         return redirect("/posts/{$post->slug}");
+    }
+
+    public function addComment(Post $post)
+    {
+        $comment_attr = Comment::commentValidation();
+        $addComment = new AddComment();
+        $addComment->addComments($post, $comment_attr);
+        return back();
     }
 
     public function destroy(Post $post)

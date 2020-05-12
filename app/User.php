@@ -42,8 +42,29 @@ class User extends Authenticatable
         return $this->hasMany(Post::class, 'owner_id');
     }
 
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'owner_id');
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
     public static function admin()
     {
         return static::where('email',env('ADMIN_EMAIL')) -> first();
     }
+
+    public function userName(User $user)
+    {
+        return $user->name;
+    }
+
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
+
 }

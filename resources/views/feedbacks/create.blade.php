@@ -16,6 +16,14 @@
                 <label for="exampleInputPassword1">Сообщение </label>
                 <input type="text" class="form-control" name="message" id="inputMessage" placeholder="Сообщение ">
             </div>
+
+            <div class="form-group">
+                <label for="inputTags">Tags</label>
+                <input id="inputTags" type="text" class="form-control" name="tags"
+                           value="{{ old('tags') }}">
+
+            </div>
+
             <button type="submit" class="btn btn-primary">Отправить</button>
         </form>
     </div>
